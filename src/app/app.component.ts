@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { AuthService } from './services/auth.service';
 
 interface Product {
   name: string;
@@ -42,7 +44,7 @@ type AuthMode = 'signin' | 'signup';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -55,12 +57,13 @@ export class AppComponent implements OnInit {
   ];
 
   protected readonly sessionKey = 'orbit-studio-session';
+  protected isAuthLoading = false;
   protected readonly initialForm: AuthFormData = { fullName: '', email: '', password: '' };
 
   protected readonly testAccount = {
-    email: 'test@orbit.studio',
-    password: 'orbit123',
-    name: 'Test User',
+    email: 'demo@orbit.studio',
+    password: 'demo@123456',
+    name: 'Demo User',
     role: 'Studio member',
     joinedAt: '2025-03-14T09:30:00.000Z'
   };
@@ -88,10 +91,20 @@ export class AppComponent implements OnInit {
   protected formData = { ...this.initialForm };
   protected session: UserSession | null = null;
   protected authError = '';
+  protected settingsForm = {
+    name: '',
+    email: '',
+    role: '',
+    location: 'Amsterdam, NL',
+    timezone: 'GMT+1'
+  };
 
   ngOnInit(): void {
     this.loadSession();
+    this.syncSettingsFormFromSession();
   }
+
+  constructor(private authService: AuthService) {}
 
   protected selectProduct(product: Product): void {
     this.activeProduct = product;
@@ -154,6 +167,20 @@ export class AppComponent implements OnInit {
     window.history.pushState({}, '', url);
   }
 
+  protected goToAccountSettings(): void {
+    this.userMenuOpen = false;
+    this.closeMenu();
+
+    const settingsNode = document.getElementById('account-settings');
+    if (settingsNode) {
+      settingsNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    const url = new URL(window.location.href);
+    url.hash = 'account-settings';
+    window.history.pushState({}, '', url);
+  }
+
   protected submitAuth(): void {
     const fullName = this.formData.fullName.trim();
     const email = this.formData.email.trim();
@@ -163,23 +190,93 @@ export class AppComponent implements OnInit {
       return;
     }
 
+    this.isAuthLoading = true;
+    this.authError = '';
+
+    // Check if backend is available
+    if (!this.authService.isBackendAvailable()) {
+      // Fallback to mock authentication if backend is not available
+      this.handleMockAuth(fullName, email, password);
+      return;
+    }
+
+    if (this.authMode === 'signin') {
+      this.authService.login({ email, password }).subscribe({
+        next: (response) => {
+          if (response.success && response.user) {
+            this.session = {
+              name: response.user.fullName,
+              email: response.user.email,
+              role: response.user.title || 'Team Member',
+              joinedAt: new Date().toISOString(),
+              initials: response.user.avatar || response.user.fullName.charAt(0)
+            };
+            this.saveSession();
+            this.closeAuth();
+            this.isAuthLoading = false;
+            queueMicrotask(() => this.goToDashboard());
+          }
+        },
+        error: (error) => {
+          this.authError = error.error?.message || 'Login failed. Please check your credentials.';
+          this.isAuthLoading = false;
+        }
+      });
+      return;
+    }
+
+    // Sign up
+    this.authService.signup({ email, password, fullName }).subscribe({
+      next: (response) => {
+        if (response.success && response.user) {
+          this.session = {
+            name: response.user.fullName,
+            email: response.user.email,
+            role: response.user.title || 'Team Member',
+            joinedAt: new Date().toISOString(),
+            initials: response.user.avatar || response.user.fullName.charAt(0)
+          };
+          this.saveSession();
+          this.closeAuth();
+          this.isAuthLoading = false;
+          queueMicrotask(() => this.goToDashboard());
+        }
+      },
+      error: (error) => {
+        this.authError = error.error?.message || 'Sign up failed. Please try again.';
+        this.isAuthLoading = false;
+      }
+    });
+  }
+
+  private handleMockAuth(fullName: string, email: string, password: string): void {
+    // Fallback to mock authentication when backend is unavailable
     if (this.authMode === 'signin') {
       const isTestAccount =
         email.toLowerCase() === this.testAccount.email &&
         password === this.testAccount.password;
 
       if (!isTestAccount) {
-        this.authError = 'Invalid credentials. Use the test account below to sign in.';
+        this.authError = 'Backend offline. Use test account: demo@orbit.studio / demo@123456';
+        this.isAuthLoading = false;
         return;
       }
 
-      this.session = this.createSession(this.testAccount.name, this.testAccount.email, this.testAccount.role, this.testAccount.joinedAt, 'TU');
+      this.session = this.createSession(
+        this.testAccount.name,
+        this.testAccount.email,
+        this.testAccount.role,
+        this.testAccount.joinedAt,
+        'DU'
+      );
       this.saveSession();
       this.closeAuth();
+      this.isAuthLoading = false;
       queueMicrotask(() => this.goToDashboard());
       return;
     }
 
+    // Mock sign-up
     const displayName = this.formatDisplayName(fullName);
     this.session = this.createSession(
       displayName || 'Orbit Member',
@@ -191,13 +288,37 @@ export class AppComponent implements OnInit {
 
     this.saveSession();
     this.closeAuth();
+    this.isAuthLoading = false;
     queueMicrotask(() => this.goToDashboard());
   }
 
   protected logout(): void {
     this.session = null;
     this.userMenuOpen = false;
+    this.settingsForm = {
+      name: '',
+      email: '',
+      role: '',
+      location: 'Amsterdam, NL',
+      timezone: 'GMT+1'
+    };
+    this.authService.logout();
     localStorage.removeItem(this.sessionKey);
+  }
+
+  protected saveProfile(): void {
+    if (!this.session) {
+      return;
+    }
+
+    this.session.name = this.settingsForm.name.trim() || this.session.name;
+    this.session.email = this.settingsForm.email.trim() || this.session.email;
+    this.session.role = this.settingsForm.role.trim() || this.session.role;
+    this.saveSession();
+  }
+
+  protected resetSettingsForm(): void {
+    this.syncSettingsFormFromSession();
   }
 
   @HostListener('window:resize')
@@ -214,16 +335,32 @@ export class AppComponent implements OnInit {
   }
 
   private loadSession(): void {
+    // First try to load from localStorage (for backward compatibility)
     const rawSession = localStorage.getItem(this.sessionKey);
 
-    if (!rawSession) {
-      return;
+    if (rawSession) {
+      try {
+        this.session = JSON.parse(rawSession) as UserSession;
+        this.syncSettingsFormFromSession();
+        return;
+      } catch {
+        localStorage.removeItem(this.sessionKey);
+      }
     }
 
-    try {
-      this.session = JSON.parse(rawSession) as UserSession;
-    } catch {
-      localStorage.removeItem(this.sessionKey);
+    // Then check if there's a valid token from the auth service
+    if (this.authService.isAuthenticated()) {
+      const user = this.authService.getCurrentUser();
+      if (user) {
+        this.session = {
+          name: user.fullName,
+          email: user.email,
+          role: user.title || 'Team Member',
+          joinedAt: new Date().toISOString(),
+          initials: user.avatar || user.fullName.charAt(0)
+        };
+        this.saveSession();
+      }
     }
   }
 
@@ -233,6 +370,20 @@ export class AppComponent implements OnInit {
     }
 
     localStorage.setItem(this.sessionKey, JSON.stringify(this.session));
+  }
+
+  private syncSettingsFormFromSession(): void {
+    if (!this.session) {
+      return;
+    }
+
+    this.settingsForm = {
+      name: this.session.name,
+      email: this.session.email,
+      role: this.session.role,
+      location: 'Amsterdam, NL',
+      timezone: 'GMT+1'
+    };
   }
 
   private isValidForm(form: AuthFormData): boolean {

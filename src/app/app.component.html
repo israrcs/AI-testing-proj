@@ -41,7 +41,7 @@
             <div class="user-menu-body">
               <p class="user-menu-role">{{ session.role }}</p>
               <button class="user-menu-link" type="button" (click)="goToDashboard()">View dashboard <span>↗</span></button>
-              <a class="user-menu-link" href="#contact" (click)="userMenuOpen = false">Account settings <span>↗</span></a>
+              <button class="user-menu-link" type="button" (click)="goToAccountSettings()">Account settings <span>↗</span></button>
             </div>
             <button class="user-menu-signout" type="button" (click)="logout()">Sign out</button>
           </div>
@@ -183,6 +183,131 @@
               </div>
               <span class="progress-value">{{ project.progress }}%</span>
             </li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section *ngIf="session" id="account-settings" class="settings-section" aria-live="polite">
+    <div class="container-fluid settings-shell">
+      <div class="settings-header">
+        <div>
+          <p class="eyebrow">Account settings</p>
+          <h2>Workspace overview</h2>
+          <p class="dashboard-subtitle">Manage your studio footprint and collaboration health.</p>
+        </div>
+        <button class="nav-button nav-button-secondary" type="button" (click)="logout()">Sign out</button>
+      </div>
+
+      <div class="settings-metrics">
+        <article class="stat-card">
+          <span class="stat-icon">◉</span>
+          <div>
+            <strong>12</strong>
+            <span>Live projects</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon">↗</span>
+          <div>
+            <strong>6</strong>
+            <span>Client launches</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon">◎</span>
+          <div>
+            <strong>24</strong>
+            <span>Team members</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="settings-grid">
+        <article class="dashboard-card highlight">
+          <span class="card-tag">Account</span>
+          <strong>{{ session.name }}</strong>
+          <p>{{ session.email }}</p>
+          <div class="status-row">
+            <span class="status-dot"></span>
+            <span>Workspace member · {{ session.role }}</span>
+          </div>
+        </article>
+
+        <article class="dashboard-card">
+          <span class="card-tag">Billing</span>
+          <strong>Studio plan</strong>
+          <p>Optimized for small-scale product teams.</p>
+          <div class="card-actions">
+            <button class="mini-button" type="button">Upgrade</button>
+            <button class="mini-button mini-button-ghost" type="button">Invoices</button>
+          </div>
+        </article>
+
+        <article class="dashboard-card">
+          <span class="card-tag">Team</span>
+          <strong>Collaboration</strong>
+          <p>All contributors are synced and active.</p>
+          <div class="status-row">
+            <span class="status-dot"></span>
+            <span>24 active members</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="settings-layout">
+        <article class="dashboard-panel settings-panel">
+          <div class="panel-heading">
+            <span class="card-tag">Profile details</span>
+            <button class="panel-link" type="button">Saved</button>
+          </div>
+
+          <form class="settings-form" (ngSubmit)="saveProfile()">
+            <div class="field-grid">
+              <label>
+                <span>Full name</span>
+                <input type="text" name="profileName" [(ngModel)]="settingsForm.name" placeholder="Full name" />
+              </label>
+
+              <label>
+                <span>Email</span>
+                <input type="email" name="profileEmail" [(ngModel)]="settingsForm.email" placeholder="Email" />
+              </label>
+
+              <label>
+                <span>Role</span>
+                <input type="text" name="profileRole" [(ngModel)]="settingsForm.role" placeholder="Role" />
+              </label>
+
+              <label>
+                <span>Location</span>
+                <input type="text" name="profileLocation" [(ngModel)]="settingsForm.location" placeholder="Location" />
+              </label>
+
+              <label>
+                <span>Timezone</span>
+                <input type="text" name="profileTimezone" [(ngModel)]="settingsForm.timezone" placeholder="Timezone" />
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button class="mini-button mini-button-ghost" type="button" (click)="resetSettingsForm()">Reset</button>
+              <button class="mini-button" type="submit">Save changes</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="dashboard-panel suggestion-panel">
+          <div class="panel-heading">
+            <span class="card-tag">Suggested updates</span>
+            <button class="panel-link" type="button">Review</button>
+          </div>
+
+          <ul class="suggestion-list">
+            <li><span class="suggestion-dot"></span> Refresh the project health summary for each launch.</li>
+            <li><span class="suggestion-dot"></span> Add a client onboarding checklist for new launches.</li>
+            <li><span class="suggestion-dot"></span> Review team access before the next sprint kickoff.</li>
           </ul>
         </article>
       </div>
