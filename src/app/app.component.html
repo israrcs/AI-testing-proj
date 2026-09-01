@@ -1,0 +1,262 @@
+<main>
+  <nav class="navbar navbar-expand-md site-nav" aria-label="Primary navigation">
+    <div class="container-fluid nav-inner">
+      <a class="brand" href="#top" (click)="closeMenu()" aria-label="Orbit Studio home">
+        <span class="brand-mark">O</span><span>ORBIT<span class="brand-dot">.</span></span>
+      </a>
+
+      <button class="navbar-toggler" type="button" aria-label="Toggle navigation" (click)="menuOpen = !menuOpen">
+        <span></span><span></span>
+      </button>
+
+      <div class="nav-links" [class.is-open]="menuOpen">
+        <a href="#products" (click)="closeMenu()">Products</a>
+        <a href="#company" (click)="closeMenu()">Company info</a>
+        <a href="#contact" (click)="closeMenu()">Contact us</a>
+        <a href="#about" (click)="closeMenu()">About</a>
+      </div>
+
+      <div class="nav-actions">
+        <button *ngIf="!session" class="nav-button nav-button-secondary" type="button" (click)="openAuth('signin')">Sign in</button>
+        <button *ngIf="!session" class="nav-button nav-button-primary" type="button" (click)="openAuth('signup')">Sign up</button>
+
+        <div *ngIf="session" class="user-root" aria-live="polite">
+          <button class="user-pill" type="button" (click)="toggleUserMenu()" aria-haspopup="true" [attr.aria-expanded]="userMenuOpen" aria-label="Open your account menu">
+            <span class="user-avatar">{{ session.initials }}</span>
+            <span class="user-meta">
+              <strong>{{ session.name }}</strong>
+              <small>Session active</small>
+            </span>
+            <span class="user-cursor" aria-hidden="true">↗</span>
+          </button>
+
+          <div *ngIf="userMenuOpen" class="user-menu">
+            <div class="user-menu-header">
+              <span class="user-avatar">{{ session.initials }}</span>
+              <div class="user-menu-identity">
+                <strong>{{ session.name }}</strong>
+                <span>{{ session.email }}</span>
+              </div>
+            </div>
+            <div class="user-menu-body">
+              <p class="user-menu-role">{{ session.role }}</p>
+              <button class="user-menu-link" type="button" (click)="goToDashboard()">View dashboard <span>↗</span></button>
+              <a class="user-menu-link" href="#contact" (click)="userMenuOpen = false">Account settings <span>↗</span></a>
+            </div>
+            <button class="user-menu-signout" type="button" (click)="logout()">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero" id="top">
+    <div class="hero-grid"></div>
+    <div class="container-fluid hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="pulse"></span> Independent digital studio · 2025</p>
+        <h1>We make<br><em>space</em> for<br>better ideas.</h1>
+        <p class="hero-intro">Orbit is a design and technology studio for teams shaping what comes next.</p>
+        <div class="hero-actions">
+          <a class="text-link" href="#products">Explore our orbit <span>↓</span></a>
+          <button *ngIf="!session" class="text-link inline-button" type="button" (click)="openAuth('signup')">Create account <span>↗</span></button>
+        </div>
+      </div>
+      <div class="scene-wrap" (pointermove)="setPointer($event)" (pointerleave)="pointerX = 0; pointerY = 0">
+        <div class="scene-label label-top">Interactive study <span>↗</span></div>
+        <div class="scene" [style.--pointer-x]="pointerX" [style.--pointer-y]="pointerY" [style.--object-color]="activeProduct.color" [style.--object-accent]="activeProduct.accent">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
+          <div class="planet"><div class="planet-shine"></div><div class="planet-ring"></div></div>
+          <div class="satellite satellite-one"></div><div class="satellite satellite-two"></div>
+        </div>
+        <div class="scene-label label-bottom"><span>Move to explore</span><span class="cross">+</span></div>
+      </div>
+    </div>
+    <div class="hero-foot container-fluid"><span>Scroll to discover</span><span class="foot-line"></span><span>Amsterdam · Worldwide</span></div>
+  </section>
+
+  <section *ngIf="session" id="dashboard" class="dashboard-section" aria-live="polite">
+    <div class="container-fluid dashboard-shell">
+      <div class="dashboard-header">
+        <div>
+          <p class="eyebrow">Active session</p>
+          <h2>Welcome back, {{ session.name }}</h2>
+          <p class="dashboard-subtitle">{{ session.role }} · {{ session.email }}</p>
+        </div>
+        <button class="nav-button nav-button-secondary" type="button" (click)="logout()">Sign out</button>
+      </div>
+
+      <div class="dashboard-stats">
+        <article class="stat-card">
+          <span class="stat-icon">◉</span>
+          <div>
+            <strong>12</strong>
+            <span>Live projects</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon">↗</span>
+          <div>
+            <strong>6</strong>
+            <span>Client launches</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon">✓</span>
+          <div>
+            <strong>98%</strong>
+            <span>Sync health</span>
+          </div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon">◷</span>
+          <div>
+            <strong>24</strong>
+            <span>Team members</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="dashboard-card highlight">
+          <span class="card-tag">Workspace</span>
+          <strong>Orbit Studio dashboard</strong>
+          <p>Member since {{ session.joinedAt | date: 'MMM yyyy' }}</p>
+          <div class="card-actions">
+            <button class="mini-button" type="button">New project</button>
+            <button class="mini-button mini-button-ghost" type="button">Invite team</button>
+          </div>
+        </article>
+
+        <article class="dashboard-card">
+          <span class="card-tag">Status</span>
+          <strong>Healthy</strong>
+          <p>Everything is synced and active</p>
+          <div class="status-row">
+            <span class="status-dot"></span>
+            <span>All systems operational</span>
+          </div>
+        </article>
+
+        <article class="dashboard-card">
+          <span class="card-tag">Quick actions</span>
+          <strong>Jump back in</strong>
+          <p>Continue where you left off</p>
+          <div class="card-actions">
+            <button class="mini-button" type="button">Open Luma Core</button>
+            <button class="mini-button mini-button-ghost" type="button">View activity</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="dashboard-lower">
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <span class="card-tag">Recent activity</span>
+            <button class="panel-link" type="button">View all ↗</button>
+          </div>
+          <ul class="activity-list">
+            <li *ngFor="let activity of dashboardActivities" class="activity-item">
+              <span class="activity-dot" [class]="'tone-' + activity.tone"></span>
+              <div class="activity-body">
+                <strong>{{ activity.label }}</strong>
+                <p>{{ activity.detail }}</p>
+              </div>
+              <time>{{ activity.time }}</time>
+            </li>
+          </ul>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <span class="card-tag">Projects</span>
+            <button class="panel-link" type="button">Manage ↗</button>
+          </div>
+          <ul class="project-list">
+            <li *ngFor="let project of dashboardProjects" class="project-item">
+              <div class="project-meta">
+                <strong>{{ project.name }}</strong>
+                <span>{{ project.status }}</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" [style.width.%]="project.progress"></div>
+              </div>
+              <span class="progress-value">{{ project.progress }}%</span>
+            </li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="intro-section" id="about">
+    <div class="container-fluid section-grid">
+      <p class="section-index">01 — Our point of view</p>
+      <div class="intro-content"><h2>Digital should feel<br><span>alive.</span></h2><p>We blend sharp strategy, expressive design, and thoughtful engineering to build digital experiences with a pulse.</p><a class="text-link dark-link" href="#company">Meet the studio <span>↗</span></a></div>
+      <div class="stamp">O<br><small>EST. 2014</small></div>
+    </div>
+  </section>
+
+  <section class="products-section" id="products">
+    <div class="container-fluid"><div class="section-heading"><p class="section-index">02 — Selected capabilities</p><h2>Tools for the<br><em>unfamiliar.</em></h2></div>
+      <div class="product-layout"><div class="product-list"><button *ngFor="let product of products; let i = index" class="product-row" [class.active]="activeProduct === product" (click)="selectProduct(product)"><span>0{{ i + 1 }}</span><strong>{{ product.name }}</strong><span class="row-arrow">↗</span></button></div><div class="product-detail"><p class="product-code">{{ activeProduct.code }}</p><h3>{{ activeProduct.name }}</h3><p>{{ activeProduct.description }}</p><div class="detail-orb" [style.background]="activeProduct.color"></div></div></div>
+    </div>
+  </section>
+
+  <section class="company-section" id="company"><div class="container-fluid company-grid"><p class="section-index">03 — Company info</p><div><h2>Small team.<br><em>Big orbit.</em></h2><p>We are a curious collective of strategists, designers, and developers who believe the best work happens at the edge of disciplines.</p><a class="text-link" href="#contact">Work with us <span>↗</span></a></div><div class="stat"><strong>11</strong><span>people<br>across 4 cities</span></div></div></section>
+
+  <footer id="contact"><div class="container-fluid footer-grid"><div><p class="eyebrow">Have a good question?</p><h2>Let's talk<span>.</span></h2></div><a class="contact-link" href="mailto:hello@orbit.studio">hello&#64;orbit.studio <span>↗</span></a></div><div class="container-fluid footer-bottom"><span>© Orbit Studio 2025</span><span>Instagram · LinkedIn · Are.na</span><span>Built with intention</span></div></footer>
+</main>
+
+<div *ngIf="authOpen" class="auth-backdrop" (click)="closeAuth()">
+  <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" (click)="$event.stopPropagation()">
+    <button class="modal-close" type="button" aria-label="Close sign in form" (click)="closeAuth()">×</button>
+
+    <div class="auth-header">
+      <div class="brand-mark modal-brand">O</div>
+      <p class="eyebrow">Member access</p>
+      <h3 id="auth-title">{{ authMode === 'signin' ? 'Sign in' : 'Create account' }}</h3>
+    </div>
+
+    <div class="auth-switch" role="tablist" aria-label="Authentication options">
+      <button type="button" class="switch-button" [class.active]="authMode === 'signin'" (click)="switchAuthMode('signin')">Sign in</button>
+      <button type="button" class="switch-button" [class.active]="authMode === 'signup'" (click)="switchAuthMode('signup')">Sign up</button>
+    </div>
+
+    <form class="auth-form" (ngSubmit)="submitAuth()">
+      <label *ngIf="authMode === 'signup'">
+        <span>Full name</span>
+        <input type="text" name="fullName" [(ngModel)]="formData.fullName" placeholder="Alex Morgan" required />
+      </label>
+
+      <label>
+        <span>Email</span>
+        <input type="email" name="email" [(ngModel)]="formData.email" placeholder="you@orbit.studio" required />
+      </label>
+
+      <label>
+        <span>Password</span>
+        <input type="password" name="password" [(ngModel)]="formData.password" placeholder="••••••••" required />
+      </label>
+
+      <p *ngIf="authError" class="auth-error" role="alert">{{ authError }}</p>
+
+      <button class="nav-button nav-button-primary auth-submit" type="submit">
+        {{ authMode === 'signin' ? 'Access dashboard' : 'Create account' }}
+      </button>
+    </form>
+
+    <div *ngIf="authMode === 'signin'" class="test-account">
+      <p>Testing? Use the demo account:</p>
+      <button class="test-account-button" type="button" (click)="useTestAccount()">
+        <span class="test-account-icon">◉</span>
+        <span>
+          <strong>test&#64;orbit.studio</strong>
+          <small>password: orbit123</small>
+        </span>
+        <span class="test-account-fill">Fill ↖</span>
+      </button>
+    </div>
+  </div>
+</div>
+
